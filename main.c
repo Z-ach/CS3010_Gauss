@@ -50,25 +50,18 @@ int parse_file(char *filename, float *coeff[], float  *constants){
 	int character = 0;
 	char number_buffer[50];
 	memset(number_buffer, '\0', 50);
-	coeff[2][0] = 50;
 	for(int i = 0; i < mat_size + 1; i++){
-		printf("%d\n", coeff);
-		printf("%d\n", coeff[0]);
-		coeff[1][0] = 100;
 		int numb_buff_index = 0;
 		int numb_index = 0;
 		while((character = fgetc(file_pointer)) != '\n'){
 			if(character == ' '){
-				printf("%f, [%d][%d] = ", atof(number_buffer), i, numb_index);
 				if(i < mat_size) coeff[i][numb_index++] = atof(number_buffer);
 				else constants[numb_index++] = atof(number_buffer);
-				printf("%f\n", coeff[i][numb_index - 1]);
 				memset(number_buffer, '\0', 50);
 				numb_buff_index = 0;
 			}
 			else{
 				number_buffer[numb_buff_index++] = character;
-				printf("buffer: %s\n", number_buffer);
 			}
 		}
 	}
@@ -81,7 +74,7 @@ int main(int argc, char *argv[]){
 	char *filename = parse_args(argc, argv, &spp);
 	float **coeff;
 	float  *constants;
-	int size = parse_file(filename, coeff, constants);
+	int size = parse_file(filename, &coeff, &constants);
 	for(int i = 0; i < size; i++){
 		for(int j = 0; j < size; j++){
 			printf("%f ", coeff[i][j]);
