@@ -73,22 +73,61 @@ void print_matrix(float **coeff, float *consts, int size){
 		for(int j = 0; j < size; j++){
 			printf("%4.1f ", coeff[i][j]);
 		}
-		printf("|");
-		if(i % 2 == 1 && i == size/2) printf("   =");
-		printf("\t|%4.1f|\n", consts[i]);
+		printf("|\t|%4.1f|\n", consts[i]);
+	}
+	printf("\n");
+}
+
+
+void naive_gauss_elim(float **coeff, float *constants, int size){
+	for(int i = 0; i < size - 1; i++){ //pivot
+		for(int j = i + 1; j < size; j++){ //current equation
+			float scale = - (coeff[j][i] / coeff[i][i]); 
+			for(int k = i; k < size; k++){ //current coefficient
+				coeff[j][k] = scale * coeff[i][k] + coeff[j][k];
+			}
+			constants[j] = scale * constants[i] + constants[j];
+			print_matrix(coeff, constants, size);
+		}
 	}
 }
+
+
+float *back_sub(float **coeff, float *constants, int size){
+	float *solution = malloc(size * sizeof(float));
+	solution[size - 1] = constants[size - 1] / coeff[size - 1][size - 1];
+	for(int i = size - 1; i >= 0; i--){
+		int sum = 0;
+		for(int j = i + 1; j < size; j++){
+			sum += solution[j] * coeff[i][j];
+		}
+		solution[i] = (constants[i] - sum) / coeff[i][i];
+	}
+	return solution;
+}
+
 
 int main(int argc, char *argv[]){
 	int spp = 0;
 	char *filename = parse_args(argc, argv, &spp);
-	float *constants = malloc(3 * sizeof(float));
 	int size = 0;
 	float **coeff = parse_file(filename, &size);
+	float *constants = malloc(size * sizeof(float));
 	for(int i = 0; i < size; i++){
-		constants[i] = coeff[size - 1][i];
+		constants[i] = coeff[size][i];
 	}
 	print_matrix(coeff, constants, size);
+
+	naive_gauss_elim(coeff, constants, size);
+	
+	print_matrix(coeff, constants, size);	
+
+	float *solution = back_sub(coeff, constants, size);
+
+	for(int i = 0; i < size; i++){
+		printf("%f ", solution[i]);
+	}
+	printf("\n");	
 
 	for(int i = 0; i < size; i++){
 	    free(coeff[i]);
