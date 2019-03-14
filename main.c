@@ -35,14 +35,14 @@ void allocate_array(int **coeff, int size){
 	printf("insertion complete. value is %d\n", coeff[1][1]);
 }
 
-int parse_file(char *filename, float *coeff[], float  *constants){
+float **parse_file(char *filename, float  *constants, int *size){
 	FILE *file_pointer = fopen(filename, "r");
-	if(file_pointer == NULL) return -1;
+	if(file_pointer == NULL) return NULL;
 	const int BUFFSIZE = 100;
 	char buffer[BUFFSIZE];
 	fgets(buffer, BUFFSIZE, file_pointer);
 	int mat_size = atoi(buffer);
-	coeff = malloc(mat_size * sizeof(float));
+	float **coeff = malloc(mat_size * sizeof(float));
 	for(int i = 0; i < mat_size; i++){
 		coeff[i] = calloc(mat_size, sizeof(float));
 	}
@@ -66,15 +66,16 @@ int parse_file(char *filename, float *coeff[], float  *constants){
 		}
 	}
 	fclose(file_pointer);
-	return mat_size;
+	*size = mat_size;
+	return coeff;
 }
 
 int main(int argc, char *argv[]){
 	int spp = 0;
 	char *filename = parse_args(argc, argv, &spp);
-	float **coeff;
-	float  *constants;
-	int size = parse_file(filename, &coeff, &constants);
+	float *constants = NULL;
+	int size = 0;
+	float **coeff = parse_file(filename, constants, &size);
 	for(int i = 0; i < size; i++){
 		for(int j = 0; j < size; j++){
 			printf("%f ", coeff[i][j]);
