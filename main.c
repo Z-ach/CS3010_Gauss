@@ -17,7 +17,6 @@ char *parse_args(int argc, char *argv[], int *spp){
 		*spp = 1;
 		arg_index++;
 	}
-	printf("checking argv[%d]\n", arg_index);
 	while(argv[arg_index][index] != '\0'){
 		index++;
 	}
@@ -35,18 +34,17 @@ void allocate_array(int **coeff, int size){
 	printf("insertion complete. value is %d\n", coeff[1][1]);
 }
 
-float **parse_file(char *filename, float  *constants, int *size){
+float **parse_file(char *filename, int *size){
 	FILE *file_pointer = fopen(filename, "r");
 	if(file_pointer == NULL) return NULL;
 	const int BUFFSIZE = 100;
 	char buffer[BUFFSIZE];
 	fgets(buffer, BUFFSIZE, file_pointer);
 	int mat_size = atoi(buffer);
-	float **coeff = malloc(mat_size * sizeof(float));
-	for(int i = 0; i < mat_size; i++){
+	float **coeff = malloc((mat_size+1) * sizeof(float*));
+	for(int i = 0; i < mat_size + 1; i++){
 		coeff[i] = calloc(mat_size, sizeof(float));
 	}
-	constants = malloc(mat_size * sizeof(float));
 	int character = 0;
 	char number_buffer[50];
 	memset(number_buffer, '\0', 50);
@@ -55,8 +53,7 @@ float **parse_file(char *filename, float  *constants, int *size){
 		int numb_index = 0;
 		while((character = fgetc(file_pointer)) != '\n'){
 			if(character == ' '){
-				if(i < mat_size) coeff[i][numb_index++] = atof(number_buffer);
-				else constants[numb_index++] = atof(number_buffer);
+				coeff[i][numb_index++] = atof(number_buffer);
 				memset(number_buffer, '\0', 50);
 				numb_buff_index = 0;
 			}
@@ -70,18 +67,29 @@ float **parse_file(char *filename, float  *constants, int *size){
 	return coeff;
 }
 
+void print_matrix(float **coeff, float *consts, int size){
+	for(int i = 0; i < size; i++){
+		printf("|");
+		for(int j = 0; j < size; j++){
+			printf("%4.1f ", coeff[i][j]);
+		}
+		printf("|");
+		if(i % 2 == 1 && i == size/2) printf("   =");
+		printf("\t|%4.1f|\n", consts[i]);
+	}
+}
+
 int main(int argc, char *argv[]){
 	int spp = 0;
 	char *filename = parse_args(argc, argv, &spp);
-	float *constants = NULL;
+	float *constants = malloc(3 * sizeof(float));
 	int size = 0;
-	float **coeff = parse_file(filename, constants, &size);
+	float **coeff = parse_file(filename, &size);
 	for(int i = 0; i < size; i++){
-		for(int j = 0; j < size; j++){
-			printf("%f ", coeff[i][j]);
-		}
-		printf("%f\n", constants[i]);
+		constants[i] = coeff[size - 1][i];
 	}
+	print_matrix(coeff, constants, size);
+
 	for(int i = 0; i < size; i++){
 	    free(coeff[i]);
     }
