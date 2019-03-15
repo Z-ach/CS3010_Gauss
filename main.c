@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <math.h>
+#include <math.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -93,17 +96,75 @@ void naive_gauss_elim(float **coeff, float *constants, int size){
 }
 
 
-float *back_sub(float **coeff, float *constants, int size){
+float *back_sub(float **coeff, float *constants, int size, int *order){
 	float *solution = malloc(size * sizeof(float));
-	solution[size - 1] = constants[size - 1] / coeff[size - 1][size - 1];
+	solution[order[size - 1]] = constants[order[size - 1]] / coeff[size - 1][size - 1];
+	printf("sol at %d was %f \n", order[size-1], solution[order[size-1]]);
 	for(int i = size - 1; i >= 0; i--){
-		int sum = 0;
+		float sum = 0;
+		printf("finding solution at %d\n", order[i]);
 		for(int j = i + 1; j < size; j++){
-			sum += solution[j] * coeff[i][j];
+			sum += solution[j] * coeff[order[i]][j];
+			printf("added %f * %f = %f\n", solution[order[j]], coeff[order[i]][j], solution[order[j]] * coeff[order[i]][j]);
 		}
-		solution[i] = (constants[i] - sum) / coeff[i][i];
+		printf("sum was %f\n", sum);
+		solution[order[i]] = (constants[order[i]] - sum) / coeff[order[i]][order[i]];
 	}
 	return solution;
+}
+
+
+void swap(int *one, int *two){
+    int temp = *one;
+    *one = *two;
+    *two = temp;
+}
+
+int max(float *array, int size){
+    int index = 0;
+    int max = array[0];
+    for(int i = 0; i < size; i++){
+        if(array[i] > max) {
+            max = array[i];
+            index = i;
+        }
+    }
+    return index;
+}
+
+int *partial_pivot_gauss(float **coeff, float *constants, int size){
+    float scale[size];
+    int *order = malloc(size * sizeof(int));
+    int used[size];
+    for(int i = 0; i < size; i++){
+        scale[i] = coeff[i][max(coeff[i], size)];
+        order[i] = i;
+        used[i] = 0;
+    }
+    for(int i = 0; i < size; i++){
+        float pivot_picker[size];
+        for(int j = 0; j < size; j++){
+            pivot_picker[j] = fabs(coeff[j][i]/scale[j]);
+            if(used[j] == 1) pivot_picker[j] = -1;
+        }
+        int piv_index = max(pivot_picker, size);
+        used[piv_index] = 1;
+        if(piv_index > i) swap(&order[piv_index], &order[i]);
+
+        for(int j = 0; j < size; j++){
+            if(used[j] == 1) continue;
+            float scale_factor = - coeff[j][i] / coeff[piv_index][i];
+            for(int k = 0; k < size; k++){
+                coeff[j][k] = coeff[j][k] + (scale_factor * coeff[piv_index][k]);
+            }
+            constants[j] = constants[j] + (scale_factor * constants[piv_index]);
+            print_matrix(coeff, constants, size);
+        }
+    }
+    for(int i = 0; i < size; i++){
+        printf("%d ", order[i]);
+    }printf("\n");
+    return order;
 }
 
 
@@ -118,11 +179,21 @@ int main(int argc, char *argv[]){
 	}
 	print_matrix(coeff, constants, size);
 
-	naive_gauss_elim(coeff, constants, size);
+    int *order;
+
+    if(spp == 0) naive_gauss_elim(coeff, constants, size);
+    else order = partial_pivot_gauss(coeff, constants, size);
 	
+	if(order == NULL){
+	    order = malloc(size * sizeof(int));
+	    for(int i = 0; i < size; i++){
+            order[i] = i;
+        }
+    }
+
 	print_matrix(coeff, constants, size);	
 
-	float *solution = back_sub(coeff, constants, size);
+	float *solution = back_sub(coeff, constants, size, order);
 
 	for(int i = 0; i < size; i++){
 		printf("%f ", solution[i]);
