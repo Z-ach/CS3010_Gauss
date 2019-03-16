@@ -56,6 +56,7 @@ float **parse_file(char *filename, int *size){
 		int numb_index = 0;
 		while((character = fgetc(file_pointer)) != '\n'){
 			if(character == ' '){
+				printf("buffer was %s\n", number_buffer);
 				coeff[i][numb_index++] = atof(number_buffer);
 				memset(number_buffer, '\0', 50);
 				numb_buff_index = 0;
