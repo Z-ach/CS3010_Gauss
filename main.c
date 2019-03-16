@@ -90,7 +90,7 @@ void naive_gauss_elim(float **coeff, float *constants, int size){
 				coeff[j][k] = scale * coeff[i][k] + coeff[j][k];
 			}
 			constants[j] = scale * constants[i] + constants[j];
-			print_matrix(coeff, constants, size);
+			//print_matrix(coeff, constants, size);
 		}
 	}
 }
@@ -99,16 +99,18 @@ void naive_gauss_elim(float **coeff, float *constants, int size){
 float *back_sub(float **coeff, float *constants, int size, int *order){
 	float *solution = malloc(size * sizeof(float));
 	solution[order[size - 1]] = constants[order[size - 1]] / coeff[size - 1][size - 1];
-	printf("sol at %d was %f \n", order[size-1], solution[order[size-1]]);
-	for(int i = size - 1; i >= 0; i--){
+	//printf("sol at %d was %f \n", order[size-1], solution[order[size-1]]);
+	for(int i = size - 2; i >= 0; i--){
 		float sum = 0;
-		printf("finding solution at %d\n", order[i]);
+		int curr_eq = order[i];
+		//printf("finding solution at %d\n", curr_eq);
 		for(int j = i + 1; j < size; j++){
-			sum += solution[j] * coeff[order[i]][j];
-			printf("added %f * %f = %f\n", solution[order[j]], coeff[order[i]][j], solution[order[j]] * coeff[order[i]][j]);
+			sum += solution[order[j]] * coeff[curr_eq][j];
+			//printf("added %f * %f = %f\n", solution[order[j]], coeff[curr_eq][j], solution[order[j]] * coeff[curr_eq][j]);
 		}
-		printf("sum was %f\n", sum);
-		solution[order[i]] = (constants[order[i]] - sum) / coeff[order[i]][order[i]];
+		//printf("eval %f - %f = %f\n", constants[curr_eq], sum, constants[curr_eq] - sum);
+		//printf("div by %f\n", coeff[curr_eq][i]);
+		solution[order[i]] = (constants[curr_eq] - sum) / coeff[curr_eq][i];
 	}
 	return solution;
 }
@@ -158,12 +160,9 @@ int *partial_pivot_gauss(float **coeff, float *constants, int size){
                 coeff[j][k] = coeff[j][k] + (scale_factor * coeff[piv_index][k]);
             }
             constants[j] = constants[j] + (scale_factor * constants[piv_index]);
-            print_matrix(coeff, constants, size);
+            //print_matrix(coeff, constants, size);
         }
     }
-    for(int i = 0; i < size; i++){
-        printf("%d ", order[i]);
-    }printf("\n");
     return order;
 }
 
@@ -179,12 +178,12 @@ int main(int argc, char *argv[]){
 	}
 	print_matrix(coeff, constants, size);
 
-    int *order;
+    int *order = NULL;
 
     if(spp == 0) naive_gauss_elim(coeff, constants, size);
     else order = partial_pivot_gauss(coeff, constants, size);
 	
-	if(order == NULL){
+	if(!order){
 	    order = malloc(size * sizeof(int));
 	    for(int i = 0; i < size; i++){
             order[i] = i;
