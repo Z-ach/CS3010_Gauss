@@ -26,16 +26,21 @@ char *parse_args(int argc, char *argv[], int *spp){
 	return argv[arg_index];
 }
 
-void allocate_array(int **coeff, int size){
-	coeff = malloc(size * sizeof(int));
+
+void write_to_file(float *solution, int size, char *filename){
+	int filename_length;
+	for(filename_length = 0; filename[filename_length] != '\0'; filename_length++);
+	char file_out_name[filename_length + 1];
+	strncpy(file_out_name, filename, filename_length - 3);
+	strcat(file_out_name, "sol");
+	printf("Printing to %s\n", file_out_name);
+	FILE *file = fopen(file_out_name, "w");
 	for(int i = 0; i < size; i++){
-		coeff[i] = malloc(size * sizeof(int));
-	}
-	printf("testing insertion...\n");
-	coeff[1][1] = 0;
-	memset(coeff[1], 1, size);
-	printf("insertion complete. value is %d\n", coeff[1][1]);
+		fprintf(file, "%f ", solution[i]);
+	}fprintf(file, "\n");
+	fclose(file);
 }
+
 
 float **parse_file(char *filename, int *size){
 	FILE *file_pointer = fopen(filename, "r");
@@ -57,10 +62,8 @@ float **parse_file(char *filename, int *size){
 		int last_char_space = 0;
 		character = fgetc(file_pointer);
 		do{
-			//printf("running... buff currently %s, %d\n", number_buffer, last_char_space);
 			if(last_char_space == 1 && character == ' ') continue;
-			if(character == ' ' && number_buffer[0] != '\0'){
-				//printf("buffer was %s\n", number_buffer);
+			if((character == ' ' || character == '\n') && number_buffer[0] != '\0'){
 				coeff[i][numb_index++] = atof(number_buffer);
 				memset(number_buffer, '\0', 50);
 				numb_buff_index = 0;
@@ -71,6 +74,8 @@ float **parse_file(char *filename, int *size){
 				last_char_space = 0;
 			}
 		}while((character = fgetc(file_pointer)) != '\n');
+		coeff[i][numb_index] = atof(number_buffer);
+		memset(number_buffer, '\0', 50);
 	}
 	fclose(file_pointer);
 	*size = mat_size;
@@ -97,7 +102,6 @@ void naive_gauss_elim(float **coeff, float *constants, int size){
 				coeff[j][k] = scale * coeff[i][k] + coeff[j][k];
 			}
 			constants[j] = scale * constants[i] + constants[j];
-			//print_matrix(coeff, constants, size);
 		}
 	}
 }
@@ -106,22 +110,14 @@ void naive_gauss_elim(float **coeff, float *constants, int size){
 float *back_sub(float **coeff, float *constants, int size, int *order){
 	float *solution = malloc(size * sizeof(float));
 	solution[size - 1] = constants[order[size - 1]] / coeff[order[size - 1]][size - 1];
-	printf("sol = %f\n", solution[size-1]);
 	for(int i = size - 2; i >= 0; i--){
 		float sum = 0;
 		int curr_eq = order[i];
-		printf("working on eq %d, sol will go into %d\n", curr_eq, i);
 		for(int j = i + 1; j < size; j++){
 			sum += solution[j] * coeff[curr_eq][j];
 		}
 		solution[i] = (constants[curr_eq] - sum) / coeff[curr_eq][i];
-		printf("(%f - %f) / %f = %f\n", constants[curr_eq], sum, coeff[curr_eq][i], solution[i]); 
-		printf("sol to %d is %f\n", i, solution[i]);
 	}
-	for(int i = 0; i < size; i++){
-		//printf("%d ", order[i]);
-		printf("%f ", solution[i]);
-	}printf("\n");
 	return solution;
 }
 
@@ -160,9 +156,6 @@ int *partial_pivot_gauss(float **coeff, float *constants, int size){
             if(used[j] == 1) pivot_picker[j] = -1;
         }
         int piv_index = max(pivot_picker, size);
-        printf("max was selected as %d, or %d\n", piv_index, order[piv_index]);
-        //if(!used[piv_index]) swap(&order[piv_index], &order[i]);
-        //if(!used[piv_index]) printf("swapped %d with %d\n", order[i], order[piv_index]);
         int spot = 0;
         for(int ind = 0; ind < size; ind++){
 			if(order[ind] == piv_index){
@@ -170,12 +163,7 @@ int *partial_pivot_gauss(float **coeff, float *constants, int size){
 				break;
 			}
         }
-        printf("spot was %d\n", spot);
 		swap(&order[spot], &order[i]);
-		printf("swapped %d with %d\n", order[i], order[spot]);
-		for(int i = 0; i < size; i++){
-			printf("%d ", order[i]);
-		}printf("\n");
 
 		used[piv_index] = 1;
 
@@ -186,7 +174,6 @@ int *partial_pivot_gauss(float **coeff, float *constants, int size){
                 coeff[j][k] = coeff[j][k] + (scale_factor * coeff[piv_index][k]);
             }
             constants[j] = constants[j] + (scale_factor * constants[piv_index]);
-            //print_matrix(coeff, constants, size);
         }
     }
     return order;
@@ -202,7 +189,6 @@ int main(int argc, char *argv[]){
 	for(int i = 0; i < size; i++){
 		constants[i] = coeff[size][i];
 	}
-	print_matrix(coeff, constants, size);
 
     int *order = NULL;
 
@@ -216,14 +202,9 @@ int main(int argc, char *argv[]){
         }
     }
 
-	print_matrix(coeff, constants, size);	
-
 	float *solution = back_sub(coeff, constants, size, order);
-
-	for(int i = 0; i < size; i++){
-		printf("%f ", solution[i]);
-	}
-	printf("\n");	
+	
+	write_to_file(solution, size, filename);
 
 	for(int i = 0; i < size; i++){
 	    free(coeff[i]);
