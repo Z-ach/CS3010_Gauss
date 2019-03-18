@@ -5,11 +5,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+//Incorrect arguments were passed in, print proper usage and quit
 void usage(char *name){
-	printf("usage: %s [--spp] file.sln\n", name);
+	printf("usage: %s [--spp] file.lin\n", name);
 	exit(1);
 }
 
+//Check to ensure that the file extension is proper, if not quit
+void check(char *filename){
+	int length;
+	for(length = 0; filename[length] != '\0'; filename++);
+	char file_ext[5];
+	memcpy(file_ext, &filename[length - 4], 4);
+	file_ext[4] = '\0';
+	if(strcmp(file_ext, ".lin") != 0){
+		printf("Invalid file extension on input file. Expecting .lin\n");
+		exit(1);
+	}
+}
+
+//Parse the cmdline args passed in, set spp flag if needed. Return the filename
 char *parse_args(int argc, char *argv[], int *spp){
 	int index = 0;
 	int arg_index = 1;
@@ -23,10 +38,11 @@ char *parse_args(int argc, char *argv[], int *spp){
 	while(argv[arg_index][index] != '\0'){
 		index++;
 	}
+	check(argv[arg_index]);
 	return argv[arg_index];
 }
 
-
+//Write the solution to a file
 void write_to_file(float *solution, int size, char *filename){
 	int filename_length;
 	for(filename_length = 0; filename[filename_length] != '\0'; filename_length++);
@@ -41,7 +57,7 @@ void write_to_file(float *solution, int size, char *filename){
 	fclose(file);
 }
 
-
+//Parse the input file, return a size + 1 x size 2d array
 float **parse_file(char *filename, int *size){
 	FILE *file_pointer = fopen(filename, "r");
 	if(file_pointer == NULL) return NULL;
@@ -82,6 +98,7 @@ float **parse_file(char *filename, int *size){
 	return coeff;
 }
 
+//Print the matrix, used for debugging purposes
 void print_matrix(float **coeff, float *consts, int size){
 	for(int i = 0; i < size; i++){
 		printf("|");
@@ -93,7 +110,7 @@ void print_matrix(float **coeff, float *consts, int size){
 	printf("\n");
 }
 
-
+//Naive Gaussian Elimination Algorithm
 void naive_gauss_elim(float **coeff, float *constants, int size){
 	for(int i = 0; i < size - 1; i++){ //pivot
 		for(int j = i + 1; j < size; j++){ //current equation
@@ -106,7 +123,7 @@ void naive_gauss_elim(float **coeff, float *constants, int size){
 	}
 }
 
-
+//Generic back substitution algorithm, requires order of execution
 float *back_sub(float **coeff, float *constants, int size, int *order){
 	float *solution = malloc(size * sizeof(float));
 	solution[size - 1] = constants[order[size - 1]] / coeff[order[size - 1]][size - 1];
@@ -121,7 +138,7 @@ float *back_sub(float **coeff, float *constants, int size, int *order){
 	return solution;
 }
 
-
+//Simple swap procedure
 void swap(int *one, int *two){
     int temp = *one;
     *one = *two;
